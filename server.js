@@ -22,13 +22,13 @@ const contactRoutes = require('./routes/contactRoutes');
 app.use('/api/contact', contactRoutes);
 
 // Producción: servir frontend (si lo integras más adelante)
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../src'))); // Ajusta si usas otro nombre de carpeta
+//if (process.env.NODE_ENV === 'production') {
+//  app.use(express.static(path.join(__dirname, '../src'))); // Ajusta si usas otro nombre de carpeta
 
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../src', 'index.html'));
-  });
-}
+//  app.get('*', (req, res) => {
+//    res.sendFile(path.resolve(__dirname, '../src', 'index.html'));
+//  });
+//}
 
 // 👉 Middleware para manejar errores (debe ir después de todas las rutas)
 const errorHandler = require('./middleware/errorHandler');

@@ -5,32 +5,40 @@ require('dotenv').config();
 // Importaciones
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const path = require('path');
+const mongoose = require('mongoose'); // 👈 FALTA ESTO
 
 // Configuraciones
-dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Conexión a MongoDB
+mongoose.connect(process.env.MONGODB_URI, {
+  // Estas opciones ya no son necesarias en mongoose v7+, pero puedes incluirlas para versiones antiguas
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('✅ Conexión a MongoDB Atlas establecida'))
+.catch(err => console.error('❌ Error al conectar a MongoDB:', err));
+
+// Eventos de conexión (para Render, paso 4)
+mongoose.connection.on('connected', () => {
+  console.log('✅ MongoDB conectado desde Render');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ Error de conexión desde Render:', err);
+});
+
 // Middlewares
-app.use(cors()); // Permitir solicitudes desde otros orígenes
-app.use(express.json()); // Parsear JSON del body
+app.use(cors());
+app.use(express.json());
 
 // Rutas
 const contactRoutes = require('./routes/contactRoutes');
 app.use('/api/contact', contactRoutes);
 
-// Producción: servir frontend (si lo integras más adelante)
-//if (process.env.NODE_ENV === 'production') {
-//  app.use(express.static(path.join(__dirname, '../src'))); // Ajusta si usas otro nombre de carpeta
-
-//  app.get('*', (req, res) => {
-//    res.sendFile(path.resolve(__dirname, '../src', 'index.html'));
-//  });
-//}
-
-// 👉 Middleware para manejar errores (debe ir después de todas las rutas)
+// Middleware de errores
 const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
 
@@ -39,4 +47,3 @@ app.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
   console.log(`🌱 Entorno: ${process.env.NODE_ENV}`);
 });
-

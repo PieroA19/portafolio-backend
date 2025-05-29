@@ -3,120 +3,215 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Panel de Administración - Mensajes</title>
+  <title>Panel de Administración</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f8f9fa;
+      font-family: system-ui, sans-serif;
+      background-color: #f5f5f5;
       color: #333;
-    }
-    header {
-      background-color: #343a40;
-      color: white;
-      padding: 1rem 2rem;
-      text-align: center;
-    }
-    main {
       padding: 2rem;
-      max-width: 1000px;
-      margin: auto;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
+
+    body.dark {
+      background-color: #121212;
+      color: #eee;
+    }
+
     h1 {
-      margin-bottom: 1.5rem;
-      font-size: 1.8rem;
-    }
-    .message-card {
-      background-color: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 1rem;
+      text-align: center;
       margin-bottom: 1rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
-    .message-card p {
-      margin: 0.3rem 0;
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
     }
-    .message-card .date {
-      color: #777;
-      font-size: 0.9rem;
+
+    .controls input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      min-width: 200px;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .logout-btn {
+      background: crimson;
+      color: white;
+    }
+
+    .logout-btn:hover {
+      background: darkred;
+    }
+
+    .toggle-btn {
+      background: #333;
+      color: white;
+    }
+
+    .toggle-btn:hover {
+      background: #555;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #eee;
+      text-align: left;
+    }
+
+    body.dark th {
+      background-color: #2a2a2a;
+    }
+
+    .pagination {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .pagination button {
+      background: #007BFF;
+      color: white;
+    }
+
+    .pagination button:disabled {
+      background: #999;
+      cursor: default;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>📬 Panel de Administración</h1>
-    <p>Mensajes recibidos desde el portafolio</p>
-    <button id="darkModeToggle" class="toggle-btn">🌙 Modo Oscuro</button>
-  </header>
-  <main id="messages-container">
-    <p>Cargando mensajes...</p>
-  </main>
+  <h1>📬 Mensajes de Contacto</h1>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Buscar por nombre o correo..."/>
+    <div>
+      <button class="toggle-btn" id="darkModeToggle">🌙 Modo Oscuro</button>
+      <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <table id="messagesTable">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Mensaje</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="pagination">
+    <button id="prevPage">Anterior</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage">Siguiente</button>
+  </div>
 
   <script>
-    async function cargarMensajes() {
+    const tableBody = document.querySelector('#messagesTable tbody');
+    const searchInput = document.getElementById('search');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+
+    let allMessages = [];
+    let filteredMessages = [];
+    let currentPage = 1;
+    const itemsPerPage = 5;
+
+    // Fetch messages
+    async function loadMessages() {
       try {
         const res = await fetch('/api/contact');
-        const mensajes = await res.json();
-
-        const contenedor = document.getElementById('messages-container');
-        contenedor.innerHTML = '';
-
-        if (mensajes.length === 0) {
-          contenedor.innerHTML = '<p>No hay mensajes por mostrar.</p>';
-          return;
-        }
-
-        mensajes.forEach(m => {
-          const card = document.createElement('div');
-          card.className = 'message-card';
-          card.innerHTML = `
-            <p><strong>Nombre:</strong> ${m.name}</p>
-            <p><strong>Email:</strong> ${m.email}</p>
-            <p><strong>Mensaje:</strong> ${m.message}</p>
-            <p class="date"><strong>Fecha:</strong> ${new Date(m.date).toLocaleString()}</p>
-          `;
-          contenedor.appendChild(card);
-        });
+        allMessages = await res.json();
+        filteredMessages = allMessages;
+        renderTable();
       } catch (err) {
-        console.error('Error al cargar mensajes:', err);
-        document.getElementById('messages-container').innerHTML = '<p>Error al cargar los mensajes.</p>';
+        tableBody.innerHTML = `<tr><td colspan="4">❌ Error al cargar mensajes</td></tr>`;
+        console.error(err);
       }
     }
 
-    cargarMensajes();
+    function renderTable() {
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageItems = filteredMessages.slice(start, end);
+
+      tableBody.innerHTML = pageItems.map(msg => `
+        <tr>
+          <td>${msg.name}</td>
+          <td>${msg.email}</td>
+          <td>${msg.message}</td>
+          <td>${new Date(msg.date).toLocaleString()}</td>
+        </tr>
+      `).join('');
+
+      pageInfo.textContent = `Página ${currentPage} de ${Math.ceil(filteredMessages.length / itemsPerPage)}`;
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = end >= filteredMessages.length;
+    }
+
+    searchInput.addEventListener('input', () => {
+      const term = searchInput.value.toLowerCase();
+      filteredMessages = allMessages.filter(msg =>
+        msg.name.toLowerCase().includes(term) ||
+        msg.email.toLowerCase().includes(term)
+      );
+      currentPage = 1;
+      renderTable();
+    });
+
+    prevBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    };
+
+    nextBtn.onclick = () => {
+      if (currentPage * itemsPerPage < filteredMessages.length) {
+        currentPage++;
+        renderTable();
+      }
+    };
+
+    function logout() {
+      window.location.href = '/';
+    }
+
+    document.getElementById('darkModeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      document.getElementById('darkModeToggle').textContent = isDark ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+    });
+
+    loadMessages();
   </script>
 </body>
 </html>
-<script>
-  const toggleBtn = document.getElementById('darkModeToggle');
-  toggleBtn.addEventListener('click', () => {
-    document.body.classList.toggle('dark');
-    toggleBtn.textContent = document.body.classList.contains('dark') ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
-  });
-</script>
-
-<style>
-  .toggle-btn {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    background: #333;
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    border: none;
-  }
-
-  body.dark {
-    background-color: #121212;
-    color: white;
-  }
-
-  body.dark table {
-    background-color: #1e1e1e;
-    color: white;
-  }
-</style>

@@ -45,4 +45,19 @@ const sendMessage = async (req, res, next) => {
   }
 };
 
-module.exports = { sendMessage };
+// Obtener todos los mensajes
+const getMessages = async (req, res, next) => {
+  try {
+    const mensajes = await Mensaje.find().sort({ date: -1 }); // ordenados por fecha descendente
+    res.status(200).json(mensajes);
+  } catch (err) {
+    console.error('❌ Error al obtener los mensajes:', err.message);
+    res.status(500).json({ error: 'Error al obtener los mensajes' });
+  }
+};
+
+// Exportar ambas funciones
+module.exports = {
+  sendMessage,
+  getMessages
+};

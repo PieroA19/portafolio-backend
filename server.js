@@ -12,7 +12,7 @@ const mongoose = require('mongoose'); // 👈 FALTA ESTO
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Conexión a MongoDB
+// Conexión a MongoDB 
 mongoose.connect(process.env.MONGODB_URI, {
   // Estas opciones ya no son necesarias en mongoose v7+, pero puedes incluirlas para versiones antiguas
   useNewUrlParser: true,

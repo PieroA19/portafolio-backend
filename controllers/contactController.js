@@ -3,6 +3,7 @@
 require('dotenv').config();
 const validator = require('validator');
 const Message = require('../models/Message'); // Asegúrate de que el nombre del modelo coincida con el archivo
+const sendNotificationEmail = require('../utils/mailer'); // 👈 Importa la función del mailer
 
 const sendMessage = async (req, res, next) => {
   let { name, email, message } = req.body;
@@ -37,6 +38,9 @@ const sendMessage = async (req, res, next) => {
     const newMessage = new Message({ name, email, message });
     await newMessage.save();
 
+    // Enviar correo de notificación
+    await sendNotificationEmail({ name, email, message });
+    
     console.log('✅ Mensaje guardado en MongoDB');
     res.status(201).json({ message: 'Mensaje guardado exitosamente en la base de datos.' });
   } catch (err) {

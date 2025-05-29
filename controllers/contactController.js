@@ -48,7 +48,7 @@ const sendMessage = async (req, res, next) => {
 // Obtener todos los mensajes
 const getMessages = async (req, res, next) => {
   try {
-    const mensajes = await Mensaje.find().sort({ date: -1 }); // ordenados por fecha descendente
+    const mensajes = await Message.find().sort({ date: -1 }); // ordenados por fecha descendente
     res.status(200).json(mensajes);
   } catch (err) {
     console.error('❌ Error al obtener los mensajes:', err.message);

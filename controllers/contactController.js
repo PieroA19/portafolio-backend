@@ -1,22 +1,8 @@
 require('dotenv').config();
-
-const fs = require('fs');
-const path = require('path');
 const validator = require('validator');
+const Mensaje = require('../models/Mensaje'); // Importa el modelo de Mongoose
 
-// Ruta al archivo de mensajes, configurable a través de una variable de entorno
-const messagesFile = process.env.MESSAGES_FILE
-  ? path.join(__dirname, '..', process.env.MESSAGES_FILE)
-  : path.join(__dirname, '..', 'messages', 'messages.json');
-
-
-// Función para validar email con regex
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-const sendMessage = (req, res, next) => {
+const sendMessage = async (req, res, next) => {
   let { name, email, message } = req.body;
 
   console.log('📥 POST /api/contact recibido');
@@ -44,40 +30,17 @@ const sendMessage = (req, res, next) => {
     return res.status(400).json({ error: 'El mensaje debe tener al menos 10 caracteres.' });
   }
 
-  const newMessage = {
-    name,
-    email,
-    message,
-    date: new Date().toISOString()
-  };
+  try {
+    // Crear nuevo documento y guardar en MongoDB
+    const nuevoMensaje = new Mensaje({ name, email, message });
+    await nuevoMensaje.save();
 
-  // Leer, agregar y guardar mensaje
-  fs.readFile(messagesFile, 'utf8', (err, data) => {
-    if (err) {
-      console.error('❌ Error al leer el archivo:', err.message);
-      return next(err);
-    }
-
-    let messages = [];
-    try {
-      messages = JSON.parse(data);
-    } catch (e) {
-      console.error('❌ Error al parsear el archivo JSON:', e.message);
-      return next(e);
-    }
-
-    messages.push(newMessage);
-
-    fs.writeFile(messagesFile, JSON.stringify(messages, null, 2), err => {
-      if (err) {
-        console.error('❌ Error al guardar el mensaje:', err.message);
-        return next(err);
-      }
-
-      console.log('✅ Mensaje guardado exitosamente');
-      res.status(201).json({ message: 'Mensaje guardado exitosamente' });
-    });
-  });
+    console.log('✅ Mensaje guardado en MongoDB');
+    res.status(201).json({ message: 'Mensaje guardado exitosamente en la base de datos.' });
+  } catch (err) {
+    console.error('❌ Error al guardar el mensaje en MongoDB:', err.message);
+    next(err);
+  }
 };
 
 module.exports = { sendMessage };

@@ -1,39 +1,122 @@
-<!-- backend/views/admin.html -->
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Panel de Mensajes</title>
+  <title>Panel de Administración - Mensajes</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 2rem; }
-    h1 { text-align: center; }
-    .mensaje { background: #fff; margin-bottom: 1rem; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .mensaje p { margin: 0.5rem 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    header {
+      background-color: #343a40;
+      color: white;
+      padding: 1rem 2rem;
+      text-align: center;
+    }
+    main {
+      padding: 2rem;
+      max-width: 1000px;
+      margin: auto;
+    }
+    h1 {
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
+    .message-card {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .message-card p {
+      margin: 0.3rem 0;
+    }
+    .message-card .date {
+      color: #777;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-  <h1>📨 Mensajes Recibidos</h1>
-  <div id="mensajes"></div>
+  <header>
+    <h1>📬 Panel de Administración</h1>
+    <p>Mensajes recibidos desde el portafolio</p>
+    <button id="darkModeToggle" class="toggle-btn">🌙 Modo Oscuro</button>
+  </header>
+  <main id="messages-container">
+    <p>Cargando mensajes...</p>
+  </main>
 
   <script>
-    fetch('/api/contact')
-      .then(res => res.json())
-      .then(data => {
-        const container = document.getElementById('mensajes');
-        data.forEach(msg => {
-          container.innerHTML += `
-            <div class="mensaje">
-              <p><strong>Nombre:</strong> ${msg.name}</p>
-              <p><strong>Email:</strong> ${msg.email}</p>
-              <p><strong>Mensaje:</strong> ${msg.message}</p>
-              <p><em>${new Date(msg.date).toLocaleString()}</em></p>
-            </div>
+    async function cargarMensajes() {
+      try {
+        const res = await fetch('/api/contact');
+        const mensajes = await res.json();
+
+        const contenedor = document.getElementById('messages-container');
+        contenedor.innerHTML = '';
+
+        if (mensajes.length === 0) {
+          contenedor.innerHTML = '<p>No hay mensajes por mostrar.</p>';
+          return;
+        }
+
+        mensajes.forEach(m => {
+          const card = document.createElement('div');
+          card.className = 'message-card';
+          card.innerHTML = `
+            <p><strong>Nombre:</strong> ${m.name}</p>
+            <p><strong>Email:</strong> ${m.email}</p>
+            <p><strong>Mensaje:</strong> ${m.message}</p>
+            <p class="date"><strong>Fecha:</strong> ${new Date(m.date).toLocaleString()}</p>
           `;
+          contenedor.appendChild(card);
         });
-      });
+      } catch (err) {
+        console.error('Error al cargar mensajes:', err);
+        document.getElementById('messages-container').innerHTML = '<p>Error al cargar los mensajes.</p>';
+      }
+    }
+
+    cargarMensajes();
   </script>
 </body>
 </html>
- 
+<script>
+  const toggleBtn = document.getElementById('darkModeToggle');
+  toggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    toggleBtn.textContent = document.body.classList.contains('dark') ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+  });
+</script>
+
+<style>
+  .toggle-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: #333;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+  }
+
+  body.dark {
+    background-color: #121212;
+    color: white;
+  }
+
+  body.dark table {
+    background-color: #1e1e1e;
+    color: white;
+  }
+</style>

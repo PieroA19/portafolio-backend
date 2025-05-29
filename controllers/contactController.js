@@ -1,6 +1,8 @@
+// backend/controllers/contactController.js
+
 require('dotenv').config();
 const validator = require('validator');
-const Mensaje = require('../models/Mensaje'); // Importa el modelo de Mongoose
+const Message = require('../models/Message'); // Asegúrate de que el nombre del modelo coincida con el archivo
 
 const sendMessage = async (req, res, next) => {
   let { name, email, message } = req.body;
@@ -31,9 +33,9 @@ const sendMessage = async (req, res, next) => {
   }
 
   try {
-    // Crear nuevo documento y guardar en MongoDB
-    const nuevoMensaje = new Mensaje({ name, email, message });
-    await nuevoMensaje.save();
+    // Crear y guardar en MongoDB usando el modelo Message
+    const newMessage = new Message({ name, email, message });
+    await newMessage.save();
 
     console.log('✅ Mensaje guardado en MongoDB');
     res.status(201).json({ message: 'Mensaje guardado exitosamente en la base de datos.' });

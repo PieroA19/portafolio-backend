@@ -36,11 +36,18 @@ app.use(express.json());
 
 // Rutas
 const contactRoutes = require('./routes/contactRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/contact', contactRoutes);
+app.use('/', adminRoutes); // Ruta protegida para /admin
 
-// Middleware de errores
+// Middleware de errores (debe ir al final)
 const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
+
+// backend/server.js (al final)
+
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/', adminRoutes); // Ruta protegida para /admin
 
 // Iniciar servidor
 app.listen(PORT, () => {
